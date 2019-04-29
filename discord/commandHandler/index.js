@@ -1,4 +1,5 @@
 const spotify = require("../../spotify");
+const ytdl = require('ytdl-core');
 
 const syntax = "ps!"
 
@@ -12,6 +13,8 @@ function validateURL(str) {
     return !!pattern.test(str);
 }
 
+var servers = []
+
 module.exports = (message) => {
     if(message.content.includes(syntax) && message.content !== syntax){
         const command = message.content.split('!', 2)[1].split(" ", 1)[0];
@@ -23,14 +26,22 @@ module.exports = (message) => {
                 if(validateURL(url)){
                     if(url.includes('spotify') && url.includes('playlist')){
                         const id = url.split('/').pop();
-                        
                         spotify.getPlaylist(id)
                         .then(playlist => {
-                            for (let i = 0; i <  playlist.body.tracks.items.length; i++) {
-                                const track =  playlist.body.tracks.items[i].track;
-
-                                message.channel.send(`p!play ${track.name}`);
-                            }
+                            var index = servers.findIndex(s => s.id == message.guild.id);
+                            if(index !== -1){
+                                for (let i = 0; i <  playlist.body.tracks.items.length; i++) {
+                                    const track =  playlist.body.tracks.items[i].track;
+                                    servers[index].queue = [...servers[index].queue, track];
+                                }
+                            } else {
+                                servers.push({id: message.guild.id, queue: []});
+                                var index = servers.findIndex(s => s.id == message.guild.id);
+                                for (let i = 0; i <  playlist.body.tracks.items.length; i++) {
+                                    const track =  playlist.body.tracks.items[i].track;
+                                    servers[index].queue.push(track);
+                                }
+                            }                        
                         })
                         .catch(error => {
                             console.log(error)
@@ -41,6 +52,21 @@ module.exports = (message) => {
                 } else {
                     message.channel.send("Please enter a valid playlist URL");
                 }
+            break;
+            case 'queue':
+                const index = servers.findIndex(s => s.id == message.guild.id);
+                var str = "";
+                for (let i = 0; i < servers[index].queue.length; i++) {
+                    const track = servers[index].queue[i];
+                    str += `${track.name} | `
+                    track.artists.forEach((artist, index) => {
+                        str += `**${artist.name}** `
+                        if(index + 1 == track.artists.length){
+                            str += "\n";
+                        }
+                    });
+                }
+                message.channel.send(str);
             break;
         }
     }
