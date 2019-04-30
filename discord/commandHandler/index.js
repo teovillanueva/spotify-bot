@@ -1,3 +1,4 @@
+const Discrod = require('discord.js');
 const spotify = require("../../spotify");
 const ytdl = require('ytdl-core');
 
@@ -16,17 +17,28 @@ const validateURL = (str) => {
 }
 
 const Play = (connection, message, index) => {
+
     var str = servers[index].items[0].track.name;
+    var artistsString = ""
+
     servers[index].items[0].track.artists.forEach(artist => {
-        str += ` ${artist.name}`
+        artistsString += `${artist.name}, `
     });
+
+    str + artistsString;
+
+    var embed = new Discrod.RichEmbed()
+    .setAuthor(servers[index].items[0].track.name, "https://developer.spotify.com/assets/branding-guidelines/icon3@2x.png")
+    .setThumbnail(servers[index].items[0].track.album.images[0].url)
+    .setDescription(`**Artits:** ${artistsString}`);
+
+    message.channel.send(embed);
 
     // TODO!!!
 
     servers[index].dispatcher = connection.playStream(ytdl(" Get link from str", {filter: "audioonly"}))
     servers[index].items.shift();
-    console.log(servers[index])
-    console.log(str);
+
     servers[index].dispatcher.on("end", () => {
         if(servers[index].items[0]){
             Play(connection, message, index);
