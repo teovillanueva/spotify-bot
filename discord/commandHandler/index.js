@@ -5,7 +5,7 @@ const ytdl = require('ytdl-core');
 const yt = require('youtube-node');
 const youtube = new yt();
 
-youtube.setKey("AIzaSyB2awpuMjO1a9v7jyg8ySq09RIcu80grB0");
+youtube.setKey(process.env.YOUTUBE_API_KEY);
 
 const syntax = "spotify!"
 
